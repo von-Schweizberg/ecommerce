@@ -1,0 +1,8 @@
+{% extends 'sign_in.html' %}
+{% block email %}{{ form.email }}{% endblock %}
+{% block password1 %}{{ form.password1 }}{% endblock %}
+{% block password2 %}<div class="mb-2">{{ form.password2 }}</div>{% endblock %}
+{% block script %}fields[4].placeholder='Re-enter password'{% endblock %}
+{% block button_text %}Register{% endblock %}
+{% block sign_text %}up{% endblock %}
+{% block have_account %}Already have an account? <a href="{% url 'login' %}" class="ml-2">Sign in</a>{% endblock %}

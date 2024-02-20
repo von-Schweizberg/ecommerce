@@ -1,0 +1,63 @@
+{% extends 'main.html' %}
+{% block content %}
+    <style>
+        #avatar-container {
+            margin: 0 auto;
+            width: 150px;
+        }
+        .avatar-img {
+            width: 100%;
+        }
+        .file-input-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 15vh;
+        }
+        .file-input-label {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        /* Optional: Hover effect */
+        .file-input-label:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <br>
+    <div id="avatar-container">
+        <img class="avatar-img" src="{{avatar}}">
+    </div>
+    <div class="file-input-container">
+        <input type="file" id="id_avatar" accept="image/*" class="hidden"/>
+        <label for="id_avatar" class="file-input-label">Update avatar</label>
+    </div>
+    <h4>My orders:</h4>
+    <hr>
+    {% for item in items %}
+        <div class="cart-row">
+            <div style="flex:2"><img class="row-image" src="{{item.image_url}}"></div>
+            <div style="flex:2">{{item.name}}</div>
+            <div style="flex:1">${{item.price}}</div>
+            <div style="flex:1">x{{item.quantity}}</div>
+        </div>
+    {% endfor %}
+    <script>
+        const avatarInput = document.getElementById('id_avatar');
+        avatarInput.addEventListener('change', async function () {
+            const formData = new FormData()
+            formData.append('avatar', this.files[0])
+            const {avatarUrl} = await (await fetch('{% url 'update_avatar' %}', {
+                method: 'POST',
+                body: formData,
+                headers: {'X-CSRFToken': document.getElementsByName('csrfmiddlewaretoken')[0].value}
+            })).json()
+            const avatar = [...document.getElementsByClassName('avatar-img')]
+            avatar.forEach(avatar => avatar.src = avatarUrl)
+        })
+    </script>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'main.html' %}
+{% block content %}
+    <style>
+        .user_card {
+            width: 350px;
+            margin-top: 100px;
+            background: rgba(69, 79, 80, 0.07);
+            padding: 10px;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            border-radius: 5px;
+        }
+        .login_btn {
+            border-radius: 5px;
+            background: #3399ff !important;
+            color: white !important;
+        }
+        .login_btn:hover {
+            filter: brightness(0.95);
+        }
+    </style>
+    <div class="d-flex justify-content-center">
+        <div class="user_card">
+            <div class="d-flex justify-content-center" style="margin-top: 20px;">
+                <form method="post">
+                    {% csrf_token %}
+                    <!--Django AuthenticationForm uses email as a 'username' field-->
+                    <div class="mb-3">{% block email %}{{form.username}}{% endblock %}</div>
+                    <div class="mb-2">{% block password1 %}{{form.password}}{% endblock %}</div>
+                    {% block password2 %}{% endblock %}
+                    <div id="error-message" style="color: red;">{{form.errors}}</div>
+                    <div class="mt-3">
+                        <input class="btn login_btn" type="submit" value="{% block button_text %}Login{% endblock %}">
+                    </div>
+                    <script src="//accounts.google.com/gsi/client" async></script>
+                    <div id="g_id_onload"
+                         data-client_id="...apps.googleusercontent.com"
+                         data-callback="handleAuth"></div>
+                    <div class="g_id_signin mt-5" data-text="sign{% block sign_text %}in{% endblock %}_with"></div>
+                </form>
+            </div>
+            <div class="mt-4">
+                <div class="d-flex justify-content-center">
+                    {% block have_account %}Don't have an account? <a href="{% url 'register' %}" class="ml-2">Sign Up</a>{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const fields = document.getElementsByTagName('input')
+        fields[2].placeholder='Email'
+        fields[3].placeholder='Enter password'
+        {% block script %}{% endblock %}
+        for (let field in fields){
+            fields[field].className += ' form-control'
+        }
+        async function handleAuth(response) {
+            const {redirectUrl} = await (await fetch("{% url 'google' %}", {
+              method: "POST",
+              headers: {
+                  'Authorization': `Bearer ${response.credential}`,
+                  'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+              }
+            })).json()
+            window.location.href = redirectUrl
+       }
+    </script>
+{% endblock %}

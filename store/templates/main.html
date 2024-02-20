@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+        <title>Ecom</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+              integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
+        <meta http-equiv="Content-Security-Policy" content="font-src 'self' https://fonts.gstatic.com;">
+        {% csrf_token %}
+        <script>
+            async function fetchPost(url, data) {
+                return (await fetch(`${url}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })).json()
+            }
+        </script>
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <a class="navbar-brand" href="{% url 'store' %}">ECOM</a>
+            <div class="form-inline my-2 my-lg-0 ml-auto">
+                    <a href="{% url 'cart' %}">
+                        <img id="cart-icon" src="{% static 'images/cart.png' %}">
+                    </a>
+                     <p id="cart-total" class="cart-items" style="margin-right: 10px">{{items_in_cart}}</p>
+                    {% if user.is_anonymous %}
+                        <a class="btn btn-warning" href="{% url 'login' %}">Login</a>
+                    {% else %}
+                        <a href="{% url 'account' %}">
+                            <div id="avatar-container" style="width: 50px; height: 50px">
+                                <img class="avatar-img" src="{{avatar}}">
+                            </div>
+                        </a>
+                    {% endif %}
+                </div>
+        </nav>
+        <div class="container">{% block content %}{% endblock content %}</div>
+    </body>
+</html>

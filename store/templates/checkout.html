@@ -1,0 +1,143 @@
+{% extends 'main.html' %}
+{% block content %}
+    <style>
+        button {
+          background: #5469d4;
+          font-family: Arial, sans-serif;
+          color: #ffffff;
+          border-radius: 4px;
+          border: 0;
+          padding: 12px 16px;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          display: block;
+          transition: all 0.2s ease;
+          box-shadow: 0px 4px 5.5px 0px rgba(0, 0, 0, 0.07);
+          width: 100%;
+        }
+        button:hover {
+          filter: contrast(115%);
+        }
+        button:disabled {
+          opacity: 0.5;
+          cursor: default;
+        }
+        #payment-message{
+          color: rgb(255, 255, 255);
+          font-size: 25px;
+          line-height: 20px;
+          padding-top: 12px;
+          text-align: center;
+        }
+    </style>
+    <div class="row">
+        {% if items %}
+            <div class="col-lg-6">
+            <div class="box-element" id="form-wrapper">
+                <form id="form">
+                    <div id="user-info">
+                        <div class="form-field">
+							<input required class="form-control" type="text" name="name" placeholder="Name">
+                        </div>
+                        <div class="form-field">
+                            <input required class="form-control" type="email" name="email" placeholder="Email">
+                        </div>
+                    </div>
+                    <hr>
+                    <input id="form-button" class="btn btn-success btn-block" type="submit" value="Continue">
+                </form>
+            </div>
+            <br>
+            <script src="https://js.stripe.com/v3/"></script>
+            <div id="str-elements"></div>
+            </div>
+        {% endif %}
+        <div class="col-lg-6">
+            <div class="box-element">
+                <a class="btn btn-outline-dark" href="{% url 'cart' %}">&#x2190; Back to Cart</a>
+                <hr>
+                <h3>Order Summary</h3>
+                <hr>
+                {% for item in items %}
+                <div class="cart-row">
+                    <div style="flex:2"><img class="row-image" src="{{item.image_url}}"></div>
+                    <div style="flex:2"><p>{{item.name}}</p></div>
+                    <div style="flex:1"><p>${{item.price}}</p></div>
+                    <div style="flex:1"><p>x{{item.quantity}}</p></div>
+                </div>
+                {% endfor %}
+                <h5>Items: {{items_in_cart}}</h5>
+                <h5>Total: ${{cart_total}}</h5>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('form').addEventListener('submit', async function (event) {
+            event.preventDefault()
+            const values = document.getElementsByClassName('form-control')
+            const {clientResponse} = await fetchPost({% url 'pay' %}, {'name': values[0].value, 'email': values[1].value})
+            if (!clientResponse) {return}
+            clientSecret = clientResponse
+            document.getElementById('str-elements').innerHTML = `
+                {% if shipping %}
+                    <form id="address-form">
+                      <h3>Address</h3>
+                      <div id="address-element">
+                        <!-- Elements will create form elements here -->
+                      </div>
+                    </form>
+                {% endif %}
+                <a href="https://docs.stripe.com/testing#cards">Cards for testing (Click on me)</a>
+                <form id="payment-form">
+                  <div id="payment-element">
+                    <!--Stripe.js injects the Payment Element-->
+                  </div>
+                  <button id="submit">
+                    <span id="button-text">Pay now</span>
+                  </button>
+                  <div id="payment-message" class="hidden"></div>
+                </form>                `
+            initialize()
+            document.querySelector("#payment-form").addEventListener("submit", handleSubmit)
+        })
+        // stripe primary key
+        const stripe = Stripe("pk_...")
+        let elements
+        async function initialize() {
+          elements = stripe.elements({clientSecret})
+          {% if shipping %}
+              elements.create("address", {
+                  mode: "shipping",
+              }).mount("#address-element")
+          {% endif %}
+          elements.create("payment").mount("#payment-element")
+        }
+        async function handleSubmit(e) {
+          e.preventDefault()
+          const {error} = await stripe.confirmPayment({
+            elements, redirect: 'if_required',
+            confirmParams: {return_url: "https://domain_name.com"},
+          })
+          const {paymentIntent} = await stripe.retrievePaymentIntent(clientSecret)
+            if (paymentIntent.status === 'succeeded') {
+                setTimeout(()=> window.location.href = '{% url 'store' %}', 1000)
+            }
+          if (error.type === "card_error" || error.type === "validation_error") {
+            showMessage(error.message)
+          }else{
+            showMessage("An unexpected error occurred.")
+          }
+        }
+        // ------- UI helpers for Stripe -------
+        function showMessage(messageText) {
+          const messageContainer = document.querySelector("#payment-message")
+          messageContainer.classList.remove("hidden")
+          messageContainer.textContent = messageText
+          setTimeout(function () {
+            messageContainer.classList.add("hidden")
+            messageContainer.textContent = ""
+          }, 4000)
+        }
+    </script>
+{% endblock content %}

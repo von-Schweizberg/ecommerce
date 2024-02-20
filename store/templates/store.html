@@ -1,0 +1,22 @@
+{% extends 'main.html' %}
+{% block content %}
+    <div class="row">
+        {% for product in products %}
+        <div class="col-lg-4">
+            <img class="thumbnail" src="{{product.image_url}}">
+            <div class="box-element product">
+                <h6><strong>{{product.name}}</strong></h6>
+                <hr>
+                <button onclick="addToCart({{product.id}})" class="btn btn-outline-secondary add-btn update-cart">Add to Cart</button>
+                <h4 style="display: inline-block; float: right">${{product.price}}</h4>
+            </div>
+        </div>
+        {% endfor %}
+        <script>
+            async function addToCart(productId) {
+                const {cartItems} = await fetchPost({% url 'add_to_cart' %}, {'product_id': productId})
+                document.getElementById('cart-total').textContent = cartItems
+            }
+        </script>
+    </div>
+{% endblock content %}
